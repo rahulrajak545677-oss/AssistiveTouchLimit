@@ -14,16 +14,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
+      - name: Unzip project
+        run: |
+          for z in *.zip; do [ -f "$z" ] && unzip -oq "$z"; done
+          find . -not -path './.git/*' -maxdepth 2 | head -30
       - name: Find project and build
         run: |
           FILE=$(find . -name settings.gradle.kts | head -n1)
           if [ -z "$FILE" ]; then
-            echo "settings.gradle.kts not found. Files in repo:"
-            find . -not -path './.git/*' -type f | head -50
+            echo "settings.gradle.kts not found"
             exit 1
           fi
           DIR=$(dirname "$FILE")
-          echo "Project dir: $DIR"
           echo "PROJECT_DIR=$DIR" >> $GITHUB_ENV
           cd "$DIR"
           gradle assembleDebug --no-daemon --stacktrace
