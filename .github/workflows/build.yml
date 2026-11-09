@@ -14,8 +14,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
-      - run: gradle assembleDebug --no-daemon
+      - name: Find project and build
+        run: |
+          FILE=$(find . -name settings.gradle.kts | head -n1)
+          if [ -z "$FILE" ]; then
+            echo "settings.gradle.kts not found. Files in repo:"
+            find . -not -path './.git/*' -type f | head -50
+            exit 1
+          fi
+          DIR=$(dirname "$FILE")
+          echo "Project dir: $DIR"
+          echo "PROJECT_DIR=$DIR" >> $GITHUB_ENV
+          cd "$DIR"
+          gradle assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
